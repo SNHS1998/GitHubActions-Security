@@ -1,0 +1,43 @@
+name: SonarCloud Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Set up Salesforce CLI to run tests
+    - name: Setup Salesforce CLI
+      uses: forcedotcom/cli-sfdx-ci-action@v1
+
+    # Run Apex Tests with Coverage
+    - name: Run Apex Tests
+      run: |
+        sfdx force:apex:test:run --resultformat junit --outputdir coverage/ --codecoverage --wait 10
+
+    # Setup Java (required for SonarCloud scanner)
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+
+    # Setup SonarCloud
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@v2
+      with:
+        projectKey: ${{ secrets.SONAR_PROJECT_KEY }}    # Store this in GitHub Secrets
+        organization: ${{ secrets.SONAR_ORGANIZATION }} # Store this in GitHub Secrets
+        token: ${{ secrets.SONAR_TOKEN }}               # Store SonarCloud token in GitHub Secrets
+      env:
+        SONAR_SCANNER_OPTS: "-Xmx1024m"
