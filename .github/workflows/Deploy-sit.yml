@@ -8,7 +8,7 @@ on:
     paths:
       - 'force-app/**'
     branches:
-      - SIT
+      - sit
 jobs:
   build-and-deploy: ## Name of the Job
     runs-on: ubuntu-latest ## Github Hosted [Self Hosted]
