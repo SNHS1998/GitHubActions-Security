@@ -1,0 +1,43 @@
+name: Validating against to Production
+run-name: ${{ github.actor }} is running the Github Actions 🚀
+## Pipeline will be running mainly on 2 events most of the time 
+### push, pull_request
+on: 
+  pull_request:
+    types: [opened]
+    paths:
+      - 'force-app/**'
+    branches:
+      - main
+jobs:
+  build-and-deploy: ## Name of the Job
+    runs-on: ubuntu-latest ## Github Hosted [Self Hosted]
+    steps:
+      - run: echo "This is my first Job"
+        name: "First Job Message"
+      - name: Checkout Code
+        uses: actions/checkout@v4.1.7
+        with:
+          fetch-depth: 0
+      - name: npm install
+        run: npm install
+        ## Install Saleforce CLI
+      - name: Install Salesforce CLI
+        run: npm install @salesforce/cli --global
+      - name: Decrypt the server.key  file
+        run: openssl enc -nosalt -aes-256-cbc -d -in ${{secrets.ENCRYPTED_KEY_FILE_PROD}}  -out ${{secrets.JWT_KEY_FILE_PROD}}  -base64 -K ${{secrets.KEY_PROD}}  -iv ${{secrets.IV_PROD}}
+      - name: Authorize the org
+        run: sf login org jwt --username ${{secrets.SF_PROD_USER}} --keyfile ${{ secrets.JWT_KEY_FILE_PROD}} --clientid ${{secrets.SF_CLIENT_ID_PROD}}  --alias Production  --instance-url ${{secrets.SF_INSTANCE_PROD_URL}}
+      - name: Print the login org 
+        run: sf org display user -o Production
+
+      - name: Deploy the code to salesforce
+        run: sf project deploy validate --source-dir force-app -o Production
+      
+      
+
+  clean-up:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This is my second Job"
+        name: "Print Message"
