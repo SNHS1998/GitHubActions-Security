@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Update the version of actions/checkout to v4
+      
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -28,4 +28,3 @@ jobs:
       - name: Print Logs (for Debugging)
         run: docker logs $(docker ps -alq)
         continue-on-error: true
-		  
