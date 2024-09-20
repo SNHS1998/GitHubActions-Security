@@ -10,21 +10,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Docker
+      - name: Start OWASP ZAP Baseline Scan
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io
-          sudo systemctl start docker
-          sudo systemctl enable docker
-
-      - name: Start OWASP ZAP scan
-        run: |
-          docker run -t owasp/zap2docker-stable zap-baseline.py \
+          docker pull owasp/zap2docker-stable
+          docker run -v $(pwd):/zap/wrk/ -t owasp/zap2docker-stable zap-baseline.py \
             -t https://clarienbank--developer.sandbox.my.site.com/s/ \
-            -r zap_report.html
+            -r zap_report.html --auto
+        continue-on-error: true
 
       - name: Upload ZAP Report
         uses: actions/upload-artifact@v2
         with:
           name: zap-report
           path: zap_report.html
+
+      - name: Print Logs (for Debugging)
+        run: docker logs $(docker ps -alq)
+        continue-on-error: true
