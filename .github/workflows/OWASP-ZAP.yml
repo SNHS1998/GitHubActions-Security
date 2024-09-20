@@ -10,6 +10,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Set up Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
       - name: Start OWASP ZAP scan
         run: |
           docker run -t owasp/zap2docker-stable zap-baseline.py \
