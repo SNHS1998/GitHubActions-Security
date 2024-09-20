@@ -1,20 +1,43 @@
-name: Check run
-
-on: [push, pull_request]
-
+name: Deploy to SIT Sandbox
+run-name: ${{ github.actor }} is running the Github Actions 🚀
+## Pipeline will be running mainly on 2 events most of the time 
+### push, pull_request
+on: 
+  pull_request:
+    types: [closed]
+    paths:
+      - 'force-app/**'
+    branches:
+      - sit
 jobs:
-  check-run:
-    runs-on: ubuntu-latest
-
+  build-and-deploy: ## Name of the Job
+    runs-on: ubuntu-latest ## Github Hosted [Self Hosted]
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - run: echo "This is my first Job"
+        name: "First Job Message"
+      - name: Checkout Code
+        uses: actions/checkout@v4.1.7
+        with:
+          fetch-depth: 0
+      - name: npm install
+        run: npm install
+        ## Install Saleforce CLI
+      - name: Install Salesforce CLI
+        run: npm install @salesforce/cli --global
+      - name: Decrypt the server.key  file
+        run: openssl enc -nosalt -aes-256-cbc -d -in ${{secrets.ENCRYPTED_KEY_FILE_SIT}}  -out ${{secrets.JWT_KEY_FILE_SIT}}  -base64 -K ${{secrets.KEY_SIT}}  -iv ${{secrets.IV_SIT}}
+      - name: Authorize the org
+        run: sf login org jwt --username ${{secrets.SF_SIT_USER}} --keyfile ${{ secrets.JWT_KEY_FILE_SIT }} --clientid ${{secrets.SF_CLIENT_ID_SIT}}  --alias SIT  --instance-url ${{secrets.SF_INSTANCE_TEST_URL}}
+      - name: Print the login org 
+        run: sf org display user -o SIT
 
-    - run: sudo apt-get update && sudo apt-get install -y nginx && sudo systemctl start nginx
+      - name: Deploy the code to salesforce
+        run: sf project deploy start --source-dir force-app -o SIT
+      
+      
 
-    - name: ZAP Scan
-      uses: ./
-      id: action-baseline
-      with:
-        target: 'http://localhost'
-        allow_issue_writing: false
+  clean-up:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "This is my second Job"
+        name: "Print Message"
