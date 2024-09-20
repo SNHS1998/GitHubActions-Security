@@ -7,16 +7,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Start OWASP ZAP Baseline Scan
         run: |
-          docker pull owasp/zap2docker-stable
-          docker run -v $(pwd):/zap/wrk/ -t owasp/zap2docker-stable zap-baseline.py \
+          docker pull owasp/zap
+          container_id=$(docker run -d -v $(pwd):/zap/wrk/ -t owasp/zap zap-baseline.py \
             -t https://clarienbank--developer.sandbox.my.site.com/s/ \
-            -r zap_report.html --auto
+            -r zap_report.html --auto)
+          echo "Container ID: $container_id"
+
+      - name: Get Docker Logs (for Debugging)
+        run: |
+          docker logs $container_id
         continue-on-error: true
 
       - name: Upload ZAP Report
@@ -24,7 +28,3 @@ jobs:
         with:
           name: zap-report
           path: zap_report.html
-
-      - name: Print Logs (for Debugging)
-        run: docker logs $(docker ps -alq)
-        continue-on-error: true
